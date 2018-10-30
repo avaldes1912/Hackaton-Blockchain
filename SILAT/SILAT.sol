@@ -49,11 +49,11 @@ contract silat
     //De aqui para arriba todo ha sido probado en REMIX y corre relativamente bien
     //De aqui para abajo nada ha sido probado, cuidado
 
-    fuction addBidder(uint254 id_licitacion, uint256 id_bidder, string bidder_name) //Funcion que le agrega un bidder a una licitacion en especifico
+    //Funcion que le agrega un bidder a una licitacion en especifico
+    function addBidder(uint256 id_licitacion, uint256 id_bidder, string bidder_name) public
     {
         licitaciones[id_licitacion].bidders[id_bidder].id_bidder = id_bidder;
         licitaciones[id_licitacion].bidders[id_bidder].bidder_name = bidder_name;
-        licitaciones[id_licitacion].bidders[id_bidder].direccion_bidder = direccion_bidder;
         licitaciones[id_licitacion].bidders[id_bidder].direccion_bidder = msg.sender;
 
         licitaciones[id_licitacion].bidderCount++;
