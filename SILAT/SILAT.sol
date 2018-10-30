@@ -1,123 +1,123 @@
 pragma solidity 0.4.25;
 
     /*TODO
-    (DONE) agregar variables para detalles de la licitacion
-    (DONE) agregar variable para identificar que la licitacion esta en curso
-    (DONE) agregar funcion que cambie el estado del registro de la licitacion a terminado
-    (DONE) agregar funcion que cambie el estado del curso de la licitacion a "ya no esta en curso"
-    (DONE) validacion de que si ya se termino el periodo de registro no puedan agregarse mas bidders
-    (DONE) validacion de que si ya la licitacion no esta ongoing (en curso) no puedan agregarse mas bidders
-    (DONE) validar que no se puedan solicitar terminar el periodo de registro ni el periodo de en curso si el numero de licitaciones es de 0
-    (DONE) endOngoingPeriod func return succes and error messages
-    (DONE) endRegistrationPeriod func return success and error messages
-    (DONE) addBidder func return success and error messages
-    (DONE) validar que no se puedan agregar bidders si no existe ninguna bid actualmente
-
+    reemplazar los requires repetidos por una sola funcion modifier
+    agregar estructuras de fecha para controlar el periodo de registro e implementarlo con la estructura bid
     validar que el numero de id no sea 0, y que sea unico, al agregar bids
     */
-    
 
 contract silat
 {
-    //Estructura que almacena la informacion de cada bidder
+    //Estructura que almacena la informacion de cada competidor (bidder)
     struct Bidder
     {
         uint256 id_bidder;
         string name;
         address bidder_address;
+        uint256 score;
     }
 
-    //Estructura que almacena la informacion de la Bid actual
+    enum StatusType {Open_Registration, JuryEvaluation, JuryConfirmation, Bid_Execution, Bid_End}
+    //Estructura que almacena la informacion de la licitacion (bid)
     struct Bid
     {
         uint256 id_bid;
         uint256 budget;
+        uint256 no_partida;
         string details;
 
-        bool registration_finished;
-        bool ongoing;
-
+        StatusType status;
         uint256 id_winner;
         mapping(uint256 => Bidder) bidders;
         uint256 bidders_count;
     }
 
     uint256 public bid_count;//Variable que nos almacena la cantidad de bids que se han agregado al smart contract hasta ahora
+    address admin;
 
-    constructor() public //metodo constructor
+    constructor() public //metodo constructor, lo que esta aqui dentro se ejecuta al depslegar el contrato
     {
         bid_count = 0;
+        admin = msg.sender;
     }
     
-    mapping(uint256 => Bid) public bids; //Declaramos el arreglo de bids
+    mapping(uint256 => Bid) public bids; //Declaramos el arreglo de licitaciones (bids)
     
-    function addBid(uint256 id_bid, uint256 budget, string details) public //Funcion publica que agrega una nueva Bid
+    //Funcion publica que agrega una nueva licitacion (bid)
+    function addBid(uint256 _budget, string _details, uint256 _no_partida) public returns(string)
     {
-        bids[id_bid].id_bid = id_bid;
-        bids[id_bid].budget = budget;
-        bids[id_bid].details = details;
+        require(msg.sender == admin, "Error, solo los administradores pueden agregar licitaciones");
 
-        bids[id_bid].registration_finished = false;
-        bids[id_bid].ongoing = true;
-        
-        bids[id_bid].id_winner = 0;
+        bids[bid_count].id_bid = bid_count;
+        bids[bid_count].budget = _budget;
+        bids[bid_count].details = _details;
+        bids[bid_count].no_partida = _no_partida;
+
+        bids[bid_count].status = StatusType.Open_Registration;
+        bids[bid_count].id_winner = 0;
 
         bid_count++;
+
+        return("Licitacion agregada exitosamente");
     }
 
-    //Funcion que le agrega un bidder a una bid en especifico
-    function addBidder(uint256 id_bid, uint256 id_bidder, string name) public returns(string)
+    //Funcion que le agrega un competidor (bidder) a una licitacion (bid) en especifico
+    function addBidder(uint256 _id_bid, string _name) public returns(string)
     {
-        if(bids[id_bid].registration_finished == false && bids[id_bid].ongoing == true )
-        {
-            bids[id_bid].bidders[id_bidder].id_bidder = id_bidder;
-            bids[id_bid].bidders[id_bidder].name = name;
-            bids[id_bid].bidders[id_bidder].bidder_address = msg.sender;
+        require(bids[_id_bid].status == StatusType.Open_Registration, "La etapa de registro ya acabo, competidor no agregado");
+        require(_id_bid >= 0 && _id_bid <= bid_count, "Error, id de licitacion no valido");
 
-            bids[id_bid].bidders_count++;
+        bids[_id_bid].bidders[bids[_id_bid].bidders_count].id_bidder = bids[_id_bid].bidders_count;
+        bids[_id_bid].bidders[bids[_id_bid].bidders_count].name = _name;
+        bids[_id_bid].bidders[bids[_id_bid].bidders_count].bidder_address = msg.sender;
 
-            return("Competidor agregado exitosamente");
-        }
-        else
-        {
-            return("Error, Competidor no agregado");
-        }
-        
+        bids[_id_bid].bidders_count++;
+
+        return("Competidor agregado exitosamente");
     }
 
-    function endRegistrationPeriod(uint256 id_bid) public returns(string)
+    //cuando el proceso de registro se termina, cambia la variable de estado
+    function endRegistrationPeriod(uint256 _id_bid) public returns(string)
     {
-        if(bid_count>0)
-        {
-            bids[id_bid].registration_finished = true;
-            return("Periodo de registro de licitacion terminado");
-        }
-        else
-        {
-            return("Error, No existen licitaciones aun");
-        }
+        require(msg.sender == admin, "Solo el administrador puede terminar el periodo de registro");
+        require(bid_count>0, "Error, aun no existen licitaciones que modificar");
+        require(_id_bid >= 0 && _id_bid <= bid_count, "Error, id de licitacion no valido");
+        require(bids[_id_bid].status == StatusType.Open_Registration, "Error, periodo de registro yaterminado");
+
+        bids[_id_bid].status = StatusType.JuryEvaluation;
+        return("Periodo de registro de licitacion terminado");
+    }
+    
+    //pide puntuacion de determinado competidor en determinada licitacion
+    function rateBidder (uint256 _id_bid, uint256 _id_bidder, uint256 _score) public returns(string)
+    {
+        require(_id_bid >= 0 && _id_bid <= bid_count, "Error, id de licitacion no valido");
+        require(_id_bidder >= 0 && _id_bidder <= bids[_id_bid].bidders_count, "Error, id de licitacion no valido");
+        require(_score >= 0 && _score <= 100, "Error, id de licitacion no valido");
+        require(bids[_id_bid].status == StatusType.JuryEvaluation, "Error, aun en periodo de registro");
+
+        bids[_id_bid].bidders[_id_bidder].score = bids[_id_bid].bidders[_id_bidder].score + _score;
+
+        return("Voto satisfactorio");
     }
 
-    function endOngoingPeriod(uint256 id_bid) public returns(string)
+    //calcula el ganador de determinada licitacion
+    function decideWinner (uint256 _id_bid) public view returns (uint256 winner)
     {
-        if(bid_count>0 || bids[id_bid].registration_finished == true)
+        require(_id_bid >= 0 && _id_bid <= bid_count, "Error, id de licitacion no valido");
+        require(bids[_id_bid].status == StatusType.JuryEvaluation, "Error, aun en periodo de registro");
+
+        uint256 highestScore;
+
+        for(uint256 i; i < bids[_id_bid].bidders_count; i++)
         {
-            bids[id_bid].ongoing = false;
-            return("Periodo de curso de licitacion terminado");
-        }
-        else
-        {
-            if(bid_count==0)
+            if(bids[_id_bid].bidders[i].score > highestScore)
             {
-                return("Error, No existen licitaciones aun");
-            }
-            else
-            {
-                if(bids[id_bid].registration_finished == true)
-                {
-                    return("Error, El periodo de registro de esta licitacion aun sigue en curso");
-                }
+                highestScore = bids[_id_bid].bidders[i].score;
+                winner = bids[_id_bid].bidders[i].id_bidder;
             }
         }
+
+        bids[_id_bid].id_winner = winner;
     }
 }
