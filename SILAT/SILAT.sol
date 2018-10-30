@@ -19,9 +19,9 @@ pragma solidity 0.4.25;
     (DONE) agregar variable de numero de partida, a la estructura bid
     (DONE) agregar variables de puntuacion a los bidders
     (DONE) asignar id automaticamente con contadores
+    (DONE) funcion para calificar a cada competidor (bidder)
+    (DONE) funcion para calcular el competidor (bidder) ganador
 
-    funcion para calificar a cada competidor bidder
-    funcion para calcular el competidor bidder ganador
     reemplazar los requires repetidos por una sola funcion modifier
     agregar estructuras de fecha para controlar el periodo de registro e implementarlo con la estructura bid
     validar que el numero de id no sea 0, y que sea unico, al agregar bids
@@ -107,5 +107,38 @@ contract silat
 
         bids[_id_bid].status = StatusType.JuryEvaluation;
         return("Periodo de registro de licitacion terminado");
+    }
+    
+    //pide puntuacion de determinado competidor en determinada licitacion
+    function rateBidder (uint256 _id_bid, uint256 _id_bidder, uint256 _score) public returns(string)
+    {
+        require(_id_bid >= 0 && _id_bid <= bid_count, "Error, id de licitacion no valido");
+        require(_id_bidder >= 0 && _id_bidder <= bids[_id_bid].bidders_count, "Error, id de licitacion no valido");
+        require(_score >= 0 && _score <= 100, "Error, id de licitacion no valido");
+        require(bids[_id_bid].status == StatusType.JuryEvaluation, "Error, aun en periodo de registro");
+
+        bids[_id_bid].bidders[_id_bidder].score = bids[_id_bid].bidders[_id_bidder].score + _score;
+
+        return("Voto satisfactorio");
+    }
+
+    //calcula el ganador de determinada licitacion
+    function decideWinner (uint256 _id_bid) public view returns (uint256 winner)
+    {
+        require(_id_bid >= 0 && _id_bid <= bid_count, "Error, id de licitacion no valido");
+        require(bids[_id_bid].status == StatusType.JuryEvaluation, "Error, aun en periodo de registro");
+
+        uint256 highestScore;
+
+        for(uint256 i; i < bids[_id_bid].bidders_count; i++)
+        {
+            if(bids[_id_bid].bidders[i].score > highestScore)
+            {
+                highestScore = bids[_id_bid].bidders[i].score;
+                winner = bids[_id_bid].bidders[i].id_bidder;
+            }
+        }
+
+        bids[_id_bid].id_winner = winner;
     }
 }
