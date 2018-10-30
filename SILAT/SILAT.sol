@@ -18,9 +18,11 @@ pragma solidity 0.4.25;
     (DONE) diferenciar variables de parametros
     (DONE) agregar variable de numero de partida, a la estructura bid
     (DONE) agregar variables de puntuacion a los bidders
+    (DONE) asignar id automaticamente con contadores
 
     funcion para calificar a cada competidor bidder
     funcion para calcular el competidor bidder ganador
+    reemplazar los requires repetidos por una sola funcion modifier
     agregar estructuras de fecha para controlar el periodo de registro e implementarlo con la estructura bid
     validar que el numero de id no sea 0, y que sea unico, al agregar bids
     */
@@ -62,17 +64,18 @@ contract silat
     
     mapping(uint256 => Bid) public bids; //Declaramos el arreglo de licitaciones (bids)
     
-    function addBid(uint256 _id_bid, uint256 _budget, string _details, uint256 _no_partida) public returns(string)//Funcion publica que agrega una nueva licitacion (bid)
+    //Funcion publica que agrega una nueva licitacion (bid)
+    function addBid(uint256 _budget, string _details, uint256 _no_partida) public returns(string)
     {
         require(msg.sender == admin, "Error, solo los administradores pueden agregar licitaciones");
 
-        bids[_id_bid].id_bid = _id_bid;
-        bids[_id_bid].budget = _budget;
-        bids[_id_bid].details = _details;
-        bids[_id_bid].no_partida = _no_partida;
+        bids[bid_count].id_bid = bid_count;
+        bids[bid_count].budget = _budget;
+        bids[bid_count].details = _details;
+        bids[bid_count].no_partida = _no_partida;
 
-        bids[_id_bid].status = StatusType.Open_Registration;
-        bids[_id_bid].id_winner = 0;
+        bids[bid_count].status = StatusType.Open_Registration;
+        bids[bid_count].id_winner = 0;
 
         bid_count++;
 
@@ -80,13 +83,14 @@ contract silat
     }
 
     //Funcion que le agrega un competidor (bidder) a una licitacion (bid) en especifico
-    function addBidder(uint256 _id_bid, uint256 _id_bidder, string _name) public returns(string)
+    function addBidder(uint256 _id_bid, string _name) public returns(string)
     {
         require(bids[_id_bid].status == StatusType.Open_Registration, "La etapa de registro ya acabo, competidor no agregado");
-        
-        bids[_id_bid].bidders[_id_bidder].id_bidder = _id_bidder;
-        bids[_id_bid].bidders[_id_bidder].name = _name;
-        bids[_id_bid].bidders[_id_bidder].bidder_address = msg.sender;
+        require(_id_bid >= 0 && _id_bid <= bid_count, "Error, id de licitacion no valido");
+
+        bids[_id_bid].bidders[bids[_id_bid].bidders_count].id_bidder = bids[_id_bid].bidders_count;
+        bids[_id_bid].bidders[bids[_id_bid].bidders_count].name = _name;
+        bids[_id_bid].bidders[bids[_id_bid].bidders_count].bidder_address = msg.sender;
 
         bids[_id_bid].bidders_count++;
 
@@ -98,6 +102,7 @@ contract silat
     {
         require(msg.sender == admin, "Solo el administrador puede terminar el periodo de registro");
         require(bid_count>0, "Error, aun no existen licitaciones que modificar");
+        require(_id_bid >= 0 && _id_bid <= bid_count, "Error, id de licitacion no valido");
         require(bids[_id_bid].status == StatusType.Open_Registration, "Error, periodo de registro yaterminado");
 
         bids[_id_bid].status = StatusType.JuryEvaluation;
