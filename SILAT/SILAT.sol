@@ -15,7 +15,10 @@ contract silat
     {
         uint256 id_bid;
         uint256 budget;
+        string details;
+
         bool registration_finished;
+        bool ongoing;
 
         uint256 id_winner;
         mapping(uint256 => Bidder) bidders;
@@ -31,13 +34,17 @@ contract silat
     
     mapping(uint256 => Bid) public bids; //Declaramos el arreglo de bids
     
-    function addBid(uint256 id_bid, uint256 budget) public //Funcion publica que agrega una nueva Bid
+    function addBid(uint256 id_bid, uint256 budget, string details) public //Funcion publica que agrega una nueva Bid
     {
         bids[id_bid].id_bid = id_bid;
         bids[id_bid].budget = budget;
+        bids[id_bid].details = details;
+
         bids[id_bid].registration_finished = false;
-        bids[id_bid].id_winner = 0;
+        bids[id_bid].ongoing = true;
         
+        bids[id_bid].id_winner = 0;
+
         bid_count++;
     }
 
@@ -52,12 +59,13 @@ contract silat
     }
 
     /*TODO
+    (DONE) agregar variables para detalles de la licitacion
+    (DONE) agregar variable para identificar que la licitacion esta en curso
+
     agregar funcion que cambie el estado del registro de la licitacion a terminado
     validacion de que si ya se termino el periodo de registro no puedan agregarse mas bidders
     validar que no se puedan agregar bidders si no existe ninguna bid actualmente
-    agregar variable para identificar que la licitacion esta en curso
     validar que el numero de id no sea 0, y que sea unico, al agregar bids
-    agregar variables para detalles de la licitacion
     */
     
 }
