@@ -17,7 +17,7 @@ pragma solidity 0.4.25;
     (DONE) validar que solo el que tenga la direccion de admin pueda agregar licitaciones
     (DONE) diferenciar variables de parametros
     (DONE) agregar variable de numero de partida, a la estructura bid
-    (DONE)agregar variables de puntuacion a los bidders
+    (DONE) agregar variables de puntuacion a los bidders
 
     funcion para calificar a cada competidor bidder
     funcion para calcular el competidor bidder ganador
