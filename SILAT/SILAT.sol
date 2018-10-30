@@ -16,10 +16,13 @@ pragma solidity 0.4.25;
     (DONE) agregar variables de estado a la estructura de las licitaciones
     (DONE) validar que solo el que tenga la direccion de admin pueda agregar licitaciones
     (DONE) diferenciar variables de parametros
+    (DONE) agregar variable de numero de partida, a la estructura bid
+    (DONE)agregar variables de puntuacion a los bidders
 
-    validar que el numero de id no sea 0, y que sea unico, al agregar bids
-    agregar variable de numero de partida, a la estructura bid
+    funcion para calificar a cada competidor bidder
+    funcion para calcular el competidor bidder ganador
     agregar estructuras de fecha para controlar el periodo de registro e implementarlo con la estructura bid
+    validar que el numero de id no sea 0, y que sea unico, al agregar bids
     */
 
 contract silat
@@ -30,6 +33,7 @@ contract silat
         uint256 id_bidder;
         string name;
         address bidder_address;
+        uint256 score;
     }
 
     enum StatusType {Open_Registration, JuryEvaluation, JuryConfirmation, Bid_Execution, Bid_End}
@@ -38,6 +42,7 @@ contract silat
     {
         uint256 id_bid;
         uint256 budget;
+        uint256 no_partida;
         string details;
 
         StatusType status;
@@ -57,13 +62,14 @@ contract silat
     
     mapping(uint256 => Bid) public bids; //Declaramos el arreglo de licitaciones (bids)
     
-    function addBid(uint256 _id_bid, uint256 _budget, string _details) public returns(string)//Funcion publica que agrega una nueva licitacion (bid)
+    function addBid(uint256 _id_bid, uint256 _budget, string _details, uint256 _no_partida) public returns(string)//Funcion publica que agrega una nueva licitacion (bid)
     {
         require(msg.sender == admin, "Error, solo los administradores pueden agregar licitaciones");
 
         bids[_id_bid].id_bid = _id_bid;
         bids[_id_bid].budget = _budget;
         bids[_id_bid].details = _details;
+        bids[_id_bid].no_partida = _no_partida;
 
         bids[_id_bid].status = StatusType.Open_Registration;
         bids[_id_bid].id_winner = 0;
