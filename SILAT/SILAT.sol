@@ -12,11 +12,12 @@ pragma solidity 0.4.25;
     (DONE) endRegistrationPeriod func return success and error messages
     (DONE) addBidder func return success and error messages
     (DONE) validar que no se puedan agregar bidders si no existe ninguna bid actualmente
+    (DONE) cambiar las validaciones de los if por los requires correspondientes
+    (DONE) agregar variables de estado a la estructura de las licitaciones
 
     validar que el numero de id no sea 0, y que sea unico, al agregar bids
-    agregar variables de rubro y de numero de partida, a la estructura bid
+    agregar variable de numero de partida, a la estructura bid
     agregar estructuras de fecha para controlar el periodo de registro e implementarlo con la estructura bid
-    agregar variables de estado para las licitaciones
     */
 
 contract silat
@@ -29,6 +30,7 @@ contract silat
         address bidder_address;
     }
 
+    enum StatusType {Open_Registration, JuryEvaluation, JuryConfirmation, Bid_Execution, Bid_End}
     //Estructura que almacena la informacion de la licitacion (bid)
     struct Bid
     {
@@ -36,9 +38,7 @@ contract silat
         uint256 budget;
         string details;
 
-        bool registration_finished;
-        bool ongoing;
-
+        StatusType status;
         uint256 id_winner;
         mapping(uint256 => Bidder) bidders;
         uint256 bidders_count;
@@ -59,9 +59,7 @@ contract silat
         bids[id_bid].budget = budget;
         bids[id_bid].details = details;
 
-        bids[id_bid].registration_finished = false;
-        bids[id_bid].ongoing = true;
-        
+        bids[id_bid].status = StatusType.Open_Registration;
         bids[id_bid].id_winner = 0;
 
         bid_count++;
@@ -70,57 +68,25 @@ contract silat
     //Funcion que le agrega un competidor (bidder) a una licitacion (bid) en especifico
     function addBidder(uint256 id_bid, uint256 id_bidder, string name) public returns(string)
     {
-        if(bids[id_bid].registration_finished == false && bids[id_bid].ongoing == true )
-        {
-            bids[id_bid].bidders[id_bidder].id_bidder = id_bidder;
-            bids[id_bid].bidders[id_bidder].name = name;
-            bids[id_bid].bidders[id_bidder].bidder_address = msg.sender;
+        require(bids[id_bid].status == StatusType.Open_Registration, "La etapa de registro ya acabo, competidor no agregado");
+        
+        bids[id_bid].bidders[id_bidder].id_bidder = id_bidder;
+        bids[id_bid].bidders[id_bidder].name = name;
+        bids[id_bid].bidders[id_bidder].bidder_address = msg.sender;
 
-            bids[id_bid].bidders_count++;
+        bids[id_bid].bidders_count++;
 
-            return("Competidor agregado exitosamente");
-        }
-        else
-        {
-            return("Error, Competidor no agregado");
-        }
+        return("Competidor agregado exitosamente");
     }
 
     //cuando el proceso de registro se termina, cambia la variable
     function endRegistrationPeriod(uint256 id_bid) public returns(string)
     {
-        if(bid_count>0)
-        {
-            bids[id_bid].registration_finished = true;
-            return("Periodo de registro de licitacion terminado");
-        }
-        else
-        {
-            return("Error, No existen licitaciones aun");
-        }
-    }
+        require(msg.sender == admin, "Solo el administrador puede terminar el periodo de registro");
+        require(bid_count>0, "Error, aun no existen licitaciones que modificar");
+        require(bids[id_bid].status != StatusType.Open_Registration, "Error, periodo de registro yaterminado");
 
-    //cambia la variable ongoing cuando la licitacion ya no este en curso, osea cuando se termine
-    function endOngoingPeriod(uint256 id_bid) public returns(string)
-    {
-        if(bid_count>0 || bids[id_bid].registration_finished == true)
-        {
-            bids[id_bid].ongoing = false;
-            return("Periodo de curso de licitacion terminado");
-        }
-        else
-        {
-            if(bid_count==0)
-            {
-                return("Error, No existen licitaciones aun");
-            }
-            else
-            {
-                if(bids[id_bid].registration_finished == true)
-                {
-                    return("Error, El periodo de registro de esta licitacion aun sigue en curso");
-                }
-            }
-        }
+        bids[id_bid].status = StatusType.JuryEvaluation;
+        return("Periodo de registro de licitacion terminado");
     }
 }
