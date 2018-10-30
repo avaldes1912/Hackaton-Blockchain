@@ -14,12 +14,14 @@ pragma solidity 0.4.25;
     (DONE) validar que no se puedan agregar bidders si no existe ninguna bid actualmente
 
     validar que el numero de id no sea 0, y que sea unico, al agregar bids
+    agregar variables de rubro y de numero de partida, a la estructura bid
+    agregar estructuras de fecha para controlar el periodo de registro e implementarlo con la estructura bid
+    agregar variables de estado para las licitaciones
     */
-    
 
 contract silat
 {
-    //Estructura que almacena la informacion de cada bidder
+    //Estructura que almacena la informacion de cada competidor (bidder)
     struct Bidder
     {
         uint256 id_bidder;
@@ -27,7 +29,7 @@ contract silat
         address bidder_address;
     }
 
-    //Estructura que almacena la informacion de la Bid actual
+    //Estructura que almacena la informacion de la licitacion (bid)
     struct Bid
     {
         uint256 id_bid;
@@ -44,14 +46,14 @@ contract silat
 
     uint256 public bid_count;//Variable que nos almacena la cantidad de bids que se han agregado al smart contract hasta ahora
 
-    constructor() public //metodo constructor
+    constructor() public //metodo constructor, lo que esta aqui dentro se ejecuta al depslegar el contrato
     {
         bid_count = 0;
     }
     
-    mapping(uint256 => Bid) public bids; //Declaramos el arreglo de bids
+    mapping(uint256 => Bid) public bids; //Declaramos el arreglo de licitaciones (bids)
     
-    function addBid(uint256 id_bid, uint256 budget, string details) public //Funcion publica que agrega una nueva Bid
+    function addBid(uint256 id_bid, uint256 budget, string details) public //Funcion publica que agrega una nueva licitacion (bid)
     {
         bids[id_bid].id_bid = id_bid;
         bids[id_bid].budget = budget;
@@ -65,7 +67,7 @@ contract silat
         bid_count++;
     }
 
-    //Funcion que le agrega un bidder a una bid en especifico
+    //Funcion que le agrega un competidor (bidder) a una licitacion (bid) en especifico
     function addBidder(uint256 id_bid, uint256 id_bidder, string name) public returns(string)
     {
         if(bids[id_bid].registration_finished == false && bids[id_bid].ongoing == true )
@@ -82,9 +84,9 @@ contract silat
         {
             return("Error, Competidor no agregado");
         }
-        
     }
 
+    //cuando el proceso de registro se termina, cambia la variable
     function endRegistrationPeriod(uint256 id_bid) public returns(string)
     {
         if(bid_count>0)
@@ -98,6 +100,7 @@ contract silat
         }
     }
 
+    //cambia la variable ongoing cuando la licitacion ya no este en curso, osea cuando se termine
     function endOngoingPeriod(uint256 id_bid) public returns(string)
     {
         if(bid_count>0 || bids[id_bid].registration_finished == true)
