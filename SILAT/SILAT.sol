@@ -1,5 +1,22 @@
 pragma solidity 0.4.25;
 
+    /*TODO
+    (DONE) agregar variables para detalles de la licitacion
+    (DONE) agregar variable para identificar que la licitacion esta en curso
+    (DONE) agregar funcion que cambie el estado del registro de la licitacion a terminado
+    (DONE) agregar funcion que cambie el estado del curso de la licitacion a "ya no esta en curso"
+    (DONE) validacion de que si ya se termino el periodo de registro no puedan agregarse mas bidders
+    (DONE) validacion de que si ya la licitacion no esta ongoing (en curso) no puedan agregarse mas bidders
+    (DONE) validar que no se puedan solicitar terminar el periodo de registro ni el periodo de en curso si el numero de licitaciones es de 0
+    (DONE) endOngoingPeriod func return succes and error messages
+    (DONE) endRegistrationPeriod func return success and error messages
+    (DONE) addBidder func return success and error messages
+    (DONE) validar que no se puedan agregar bidders si no existe ninguna bid actualmente
+
+    validar que el numero de id no sea 0, y que sea unico, al agregar bids
+    */
+    
+
 contract silat
 {
     //Estructura que almacena la informacion de cada bidder
@@ -49,23 +66,58 @@ contract silat
     }
 
     //Funcion que le agrega un bidder a una bid en especifico
-    function addBidder(uint256 id_bid, uint256 id_bidder, string name) public
+    function addBidder(uint256 id_bid, uint256 id_bidder, string name) public returns(string)
     {
-        bids[id_bid].bidders[id_bidder].id_bidder = id_bidder;
-        bids[id_bid].bidders[id_bidder].name = name;
-        bids[id_bid].bidders[id_bidder].bidder_address = msg.sender;
+        if(bids[id_bid].registration_finished == false && bids[id_bid].ongoing == true )
+        {
+            bids[id_bid].bidders[id_bidder].id_bidder = id_bidder;
+            bids[id_bid].bidders[id_bidder].name = name;
+            bids[id_bid].bidders[id_bidder].bidder_address = msg.sender;
 
-        bids[id_bid].bidders_count++;
+            bids[id_bid].bidders_count++;
+
+            return("Competidor agregado exitosamente");
+        }
+        else
+        {
+            return("Error, Competidor no agregado");
+        }
+        
     }
 
-    /*TODO
-    (DONE) agregar variables para detalles de la licitacion
-    (DONE) agregar variable para identificar que la licitacion esta en curso
+    function endRegistrationPeriod(uint256 id_bid) public returns(string)
+    {
+        if(bid_count>0)
+        {
+            bids[id_bid].registration_finished = true;
+            return("Periodo de registro de licitacion terminado");
+        }
+        else
+        {
+            return("Error, No existen licitaciones aun");
+        }
+    }
 
-    agregar funcion que cambie el estado del registro de la licitacion a terminado
-    validacion de que si ya se termino el periodo de registro no puedan agregarse mas bidders
-    validar que no se puedan agregar bidders si no existe ninguna bid actualmente
-    validar que el numero de id no sea 0, y que sea unico, al agregar bids
-    */
-    
+    function endOngoingPeriod(uint256 id_bid) public returns(string)
+    {
+        if(bid_count>0 || bids[id_bid].registration_finished == true)
+        {
+            bids[id_bid].ongoing = false;
+            return("Periodo de curso de licitacion terminado");
+        }
+        else
+        {
+            if(bid_count==0)
+            {
+                return("Error, No existen licitaciones aun");
+            }
+            else
+            {
+                if(bids[id_bid].registration_finished == true)
+                {
+                    return("Error, El periodo de registro de esta licitacion aun sigue en curso");
+                }
+            }
+        }
+    }
 }
