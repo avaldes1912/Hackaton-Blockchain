@@ -15,7 +15,7 @@ pragma solidity 0.4.25;
     (DONE) cambiar las validaciones de los if por los requires correspondientes
     (DONE) agregar variables de estado a la estructura de las licitaciones
     (DONE) validar que solo el que tenga la direccion de admin pueda agregar licitaciones
-    
+
     validar que el numero de id no sea 0, y que sea unico, al agregar bids
     agregar variable de numero de partida, a la estructura bid
     agregar estructuras de fecha para controlar el periodo de registro e implementarlo con la estructura bid
@@ -56,7 +56,7 @@ contract silat
     
     mapping(uint256 => Bid) public bids; //Declaramos el arreglo de licitaciones (bids)
     
-    function addBid(uint256 id_bid, uint256 budget, string details) public //Funcion publica que agrega una nueva licitacion (bid)
+    function addBid(uint256 id_bid, uint256 budget, string details) public returns(string)//Funcion publica que agrega una nueva licitacion (bid)
     {
         require(msg.sender == admin, "Error, solo los administradores pueden agregar licitaciones");
 
