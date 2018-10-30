@@ -68,6 +68,8 @@ contract silat
         bids[id_bid].id_winner = 0;
 
         bid_count++;
+
+        return("Licitacion agregada exitosamente");
     }
 
     //Funcion que le agrega un competidor (bidder) a una licitacion (bid) en especifico
