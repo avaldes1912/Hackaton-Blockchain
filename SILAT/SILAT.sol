@@ -92,7 +92,7 @@ contract silat
     {
         require(msg.sender == admin, "Solo el administrador puede terminar el periodo de registro");
         require(bid_count>0, "Error, aun no existen licitaciones que modificar");
-        require(bids[id_bid].status != StatusType.Open_Registration, "Error, periodo de registro yaterminado");
+        require(bids[_id_bid].status == StatusType.Open_Registration, "Error, periodo de registro yaterminado");
 
         bids[_id_bid].status = StatusType.JuryEvaluation;
         return("Periodo de registro de licitacion terminado");
